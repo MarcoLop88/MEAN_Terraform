@@ -65,13 +65,21 @@ Proyecto-MEAN/
 │
 ├── modules/
 │   ├── alb/
+│       ├── main.tf
+│       ├── outputs.tf
+│       └── variables.tf
 │   ├── compute/
+│       ├── main.tf
+│       ├── outputs.tf
+│       └── variables.tf
 │   ├── security/
+│       ├── main.tf
+│       ├── outputs.tf
+│       └── variables.tf
 │   └── vpc/
-│
-├── userdata/
-│   ├── node.sh
-│   └── mongo.sh
+│       ├── main.tf
+│       ├── outputs.tf
+│       └── variables.tf
 │
 └── README.md
 ```
