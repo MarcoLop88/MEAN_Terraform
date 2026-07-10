@@ -54,7 +54,7 @@ New-Item modules\\security\\main.tf, modules\\security\\variables.tf, modules\\s
 New-Item modules\\compute\\main.tf, modules\\compute\\variables.tf, modules\\compute\\outputs.tf -ItemType File
 New-Item modules\\alb\\main.tf, modules\\alb\\variables.tf, modules\\alb\\outputs.tf -ItemType File
 ``` 
-## Estructura del proyecto
+# 3. Archivos de Configuración de Terraform (Código Limpio HCL)
 
 ```text
 Proyecto-MEAN/
@@ -83,7 +83,40 @@ Proyecto-MEAN/
 │
 └── README.md
 ```
+# 4. Secuencia Operativa del Ciclo de Vida del Despliegue
 
+Con los directorios y archivos, se ejecutaron los siguientes comandos secuenciales desde la raíz C:\Proyecto-MEAN:
+
+## 4.1. Inicialización del entorno, descarga de módulos y proveedores de AWS
+```powershell
+terraform init
+```
+## 4.2 Validación de la sintaxis y relaciones de dependencias de los módulos
+```powershell
+terraform validate
+```
+## 4.3 Aplicación y construcción automatizada de los 25 recursos en la nube
+```powershell
+terraform apply --auto-approve
+```
+### Outputs Estructurados Obtenidos tras el Despliegue Exitoso
+alb_dns_name: Registro DNS público generado por AWS para canalizar las peticiones HTTP externas.
+ 
+mongodb_private_ip: Dirección de red local fija para la comunicación interna con la base de datos.
+ 
+nat_gateway_public_ip: IP pública asociada al NAT Gateway, permitiendo la actualización de paquetes a los nodos privados de forma segura.
+ 
+nodejs_private_ips: Direcciones IPs internas asignadas a las dos instancias EC2 de la app.
+ 
+nodejs_public_ips: Bloques de datos vacíos "", lo que valida la correcta aplicación del diseño de seguridad perimetral (las instancias de aplicación carecen de interfaces públicas expuestas).
+
+
+## 4.4 Desmantelamiento Seguro de Infraestructura (Control de Costos)
+Se procedió con la destrucción de la arquitectura: 
+```powershell
+terraform destroy --auto-approve
+```
+Métrica final: Destroy complete! Resources: 25 destroyed.
 
 
 
