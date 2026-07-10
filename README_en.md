@@ -5,7 +5,7 @@ Automated AWS infrastructure deployment for a **MEAN** stack application (MongoD
 The project provisions a three-tier architecture with public and private subnets, an Application Load Balancer, EC2 instances for the Node.js application, an instance for MongoDB, and a NAT Gateway that allows private resources to reach the internet without being publicly exposed.
 
 ---
-
+📖 **Spanish version:** [README.md](README.md)
 ## Table of Contents
 
 - [Architecture](#architecture)
