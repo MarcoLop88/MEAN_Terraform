@@ -57,25 +57,17 @@ New-Item modules\\alb\\main.tf, modules\\alb\\variables.tf, modules\\alb\\output
 ## Estructura del proyecto
 
 ```text
-terraform-mean/
+Proyecto-MEAN/
 │
-├── backend.tf
-├── provider.tf
-├── versions.tf
-├── variables.tf
-├── terraform.tfvars
-├── locals.tf
-├── data.tf
-├── outputs.tf
 ├── main.tf
+├── outputs.tf
+├── variables.tf
 │
 ├── modules/
-│   ├── network/
+│   ├── alb/
+│   ├── compute/
 │   ├── security/
-│   ├── keypair/
-│   ├── iam/
-│   ├── ec2-instance/
-│   └── alb/
+│   └── vpc/
 │
 ├── userdata/
 │   ├── node.sh
