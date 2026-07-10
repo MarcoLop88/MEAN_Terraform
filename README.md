@@ -1,122 +1,221 @@
 # MEAN_Terraform
 
+Despliegue automatizado en AWS de la infraestructura para una aplicación **MEAN** (MongoDB, Express, Angular, Node.js) utilizando **Terraform** como herramienta de Infraestructura como Código (IaC).
 
-# 1. Preparación del Entorno e Instalación Global
-Antes de iniciar con la gestión de los archivos de configuración, se realizó la instalación y registro global de las herramientas en el sistema operativo Windows 11.
+El proyecto crea una arquitectura de tres capas con subredes públicas y privadas, un Application Load Balancer, instancias EC2 para la aplicación Node.js, una instancia para MongoDB y un NAT Gateway para permitir la salida a internet de los recursos privados sin exponerlos.
 
-## 1.1. Instalación y Registro de Terraform
-Se descargó el ejecutable oficial terraform.exe y se ubicó en el directorio local C:\Terraform.
-Se registró la ruta de forma permanente en las variables de entorno del usuario mediante: 
-```powershell
-[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";C:\Terraform", "User")
-```
-Se verificó la correcta asignación global del binario:
+---
 
-```powershell
-terraform –version
-```
-## 1.2. Instalación y Configuración de AWS CLI v2
-Se ejecutó el instalador oficial MSI en modo silencioso desde la terminal:
-```powershell
-Start-Process msiexec.exe -ArgumentList '/i https://awscli.amazonaws.com/AWSCLIV2.msi /qn' -Wait
-```
-Se actualizaron las variables de la sesión activa de PowerShell para reconocer el comando aws:
-```powershell
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-```
-Se realizó el aprovisionamiento de las llaves de acceso temporales proporcionadas por el laboratorio:
-```powershell 
-aws configure
-AWS Access Key ID / Secret Access Key: [Credenciales de acceso asignadas]
-Default region name: us-east-1
-```
-# 2.  Creación de la Estructura de Directorios del Proyecto
+## Tabla de Contenidos
 
-Para cumplir con las buenas prácticas de modularización de infraestructura como código (IaC), se ejecutó el siguiente script de PowerShell para limpiar intentos previos y estructurar el espacio de trabajo:
+- [Arquitectura](#arquitectura)
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación de Herramientas](#instalación-de-herramientas)
+  - [Terraform](#terraform)
+  - [AWS CLI v2](#aws-cli-v2)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Uso](#uso)
+  - [1. Inicializar Terraform](#1-inicializar-terraform)
+  - [2. Validar la Configuración](#2-validar-la-configuración)
+  - [3. Desplegar la Infraestructura](#3-desplegar-la-infraestructura)
+  - [4. Destruir la Infraestructura](#4-destruir-la-infraestructura)
+- [Outputs](#outputs)
+- [Notas de Seguridad](#notas-de-seguridad)
+- [Licencia](#licencia)
 
-## Limpieza de seguridad del directorio de trabajo
-```powershell
-Remove-Item -Recurse -Force C:\\Proyecto-MEAN -ErrorAction SilentlyContinue
-``` 
-## Creación de la carpeta raíz y acceso a la misma
-```powershell
-mkdir C:\\Proyecto-MEAN
-cd C:\\Proyecto-MEAN
-```
-## Creación de las carpetas correspondientes a los submódulos de la arquitectura
-```powershell
-mkdir modules\\vpc, modules\\security, modules\\compute, modules\\alb
-```
-## Generación de la estructura interna de archivos para cada módulo
-```powershell
-New-Item modules\\vpc\\main.tf, modules\\vpc\\variables.tf, modules\\vpc\\outputs.tf -ItemType File
-New-Item modules\\security\\main.tf, modules\\security\\variables.tf, modules\\security\outputs.tf -ItemType File
-New-Item modules\\compute\\main.tf, modules\\compute\\variables.tf, modules\\compute\\outputs.tf -ItemType File
-New-Item modules\\alb\\main.tf, modules\\alb\\variables.tf, modules\\alb\\outputs.tf -ItemType File
-``` 
-# 3. Archivos de Configuración de Terraform (Código Limpio HCL)
+---
+
+## Arquitectura
+
+La infraestructura se organiza en cuatro módulos independientes y reutilizables:
+
+| Módulo | Responsabilidad |
+|---|---|
+| `vpc` | Red virtual, subredes públicas/privadas, tablas de rutas, Internet Gateway y NAT Gateway |
+| `security` | Grupos de seguridad para ALB, instancias Node.js y MongoDB |
+| `compute` | Instancias EC2 de Node.js (privadas) y MongoDB (privada) |
+| `alb` | Application Load Balancer, listeners y target groups para distribuir tráfico HTTP hacia las instancias Node.js |
+
+**Diseño de seguridad:** solo el ALB es accesible públicamente. Las instancias Node.js y MongoDB residen en subredes privadas sin IP pública, y acceden a internet (para actualizaciones de paquetes) únicamente a través del NAT Gateway.
+
+---
+
+## Requisitos Previos
+
+- Cuenta de AWS con credenciales de acceso (Access Key ID / Secret Access Key)
+- Windows 11 (las instrucciones usan PowerShell; en Linux/macOS los comandos de Terraform y AWS CLI son equivalentes)
+- Permisos de administrador para modificar variables de entorno
+
+---
+
+## Instalación de Herramientas
+
+### Terraform
+
+1. Descargar el binario oficial `terraform.exe` desde [terraform.io/downloads](https://developer.hashicorp.com/terraform/downloads) y colocarlo en `C:\Terraform`.
+2. Agregar la ruta de forma permanente a las variables de entorno del usuario:
+
+   ```powershell
+   [Environment]::SetEnvironmentVariable(
+     "Path",
+     [Environment]::GetEnvironmentVariable("Path", "User") + ";C:\Terraform",
+     "User"
+   )
+   ```
+
+3. Verificar la instalación (reiniciar la terminal antes de este paso):
+
+   ```powershell
+   terraform --version
+   ```
+
+### AWS CLI v2
+
+1. Instalar el paquete oficial en modo silencioso:
+
+   ```powershell
+   Start-Process msiexec.exe -ArgumentList '/i https://awscli.amazonaws.com/AWSCLIV2.msi /qn' -Wait
+   ```
+
+2. Refrescar las variables de la sesión activa de PowerShell:
+
+   ```powershell
+   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
+               [System.Environment]::GetEnvironmentVariable("Path","User")
+   ```
+
+3. Configurar las credenciales de acceso:
+
+   ```powershell
+   aws configure
+   ```
+
+   Se solicitarán los siguientes datos:
+
+   | Campo | Valor |
+   |---|---|
+   | AWS Access Key ID | *(tu credencial)* |
+   | AWS Secret Access Key | *(tu credencial)* |
+   | Default region name | `us-east-1` |
+   | Default output format | `json` |
+
+   > ⚠️ **Nunca** compartas ni subas tus credenciales a un repositorio. Ver la sección [Notas de Seguridad](#notas-de-seguridad).
+
+---
+
+## Estructura del Proyecto
 
 ```text
 Proyecto-MEAN/
 │
-├── main.tf
-├── outputs.tf
-├── variables.tf
+├── main.tf                  # Orquestación: invoca todos los módulos
+├── variables.tf              # Variables globales del proyecto
+├── outputs.tf                # Outputs consolidados del despliegue
 │
 ├── modules/
-│   ├── alb/
+│   ├── vpc/                  # Red, subredes, NAT Gateway
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── security/              # Security Groups
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── compute/               # Instancias EC2 (Node.js y MongoDB)
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── alb/                   # Application Load Balancer
 │       ├── main.tf
-│       ├── outputs.tf
-│       └── variables.tf
-│   ├── compute/
-│       ├── main.tf
-│       ├── outputs.tf
-│       └── variables.tf
-│   ├── security/
-│       ├── main.tf
-│       ├── outputs.tf
-│       └── variables.tf
-│   └── vpc/
-│       ├── main.tf
-│       ├── outputs.tf
-│       └── variables.tf
+│       ├── variables.tf
+│       └── outputs.tf
 │
 └── README.md
 ```
-# 4. Secuencia Operativa del Ciclo de Vida del Despliegue
 
-Con los directorios y archivos, se ejecutaron los siguientes comandos secuenciales desde la raíz C:\Proyecto-MEAN:
+Para crear esta estructura desde cero:
 
-## 4.1. Inicialización del entorno, descarga de módulos y proveedores de AWS
+```powershell
+mkdir C:\Proyecto-MEAN
+cd C:\Proyecto-MEAN
+mkdir modules\vpc, modules\security, modules\compute, modules\alb
+
+New-Item modules\vpc\main.tf, modules\vpc\variables.tf, modules\vpc\outputs.tf -ItemType File
+New-Item modules\security\main.tf, modules\security\variables.tf, modules\security\outputs.tf -ItemType File
+New-Item modules\compute\main.tf, modules\compute\variables.tf, modules\compute\outputs.tf -ItemType File
+New-Item modules\alb\main.tf, modules\alb\variables.tf, modules\alb\outputs.tf -ItemType File
+```
+
+---
+
+## Uso
+
+Todos los comandos se ejecutan desde la raíz del proyecto (`C:\Proyecto-MEAN`).
+
+### 1. Inicializar Terraform
+
+Descarga los proveedores y módulos necesarios:
+
 ```powershell
 terraform init
 ```
-## 4.2 Validación de la sintaxis y relaciones de dependencias de los módulos
+
+### 2. Validar la Configuración
+
+Comprueba la sintaxis y las dependencias entre módulos:
+
 ```powershell
 terraform validate
 ```
-## 4.3 Aplicación y construcción automatizada de los 25 recursos en la nube
+
+### 3. Desplegar la Infraestructura
+
+Crea los 25 recursos definidos en AWS:
+
 ```powershell
 terraform apply --auto-approve
 ```
-### Outputs Estructurados Obtenidos tras el Despliegue Exitoso
-alb_dns_name: Registro DNS público generado por AWS para canalizar las peticiones HTTP externas.
- 
-mongodb_private_ip: Dirección de red local fija para la comunicación interna con la base de datos.
- 
-nat_gateway_public_ip: IP pública asociada al NAT Gateway, permitiendo la actualización de paquetes a los nodos privados de forma segura.
- 
-nodejs_private_ips: Direcciones IPs internas asignadas a las dos instancias EC2 de la app.
- 
-nodejs_public_ips: Bloques de datos vacíos "", lo que valida la correcta aplicación del diseño de seguridad perimetral (las instancias de aplicación carecen de interfaces públicas expuestas).
 
+> 💡 Se recomienda ejecutar primero `terraform plan` para revisar los cambios antes de aplicarlos en un entorno real. La bandera `--auto-approve` se usa aquí por tratarse de un entorno de laboratorio.
 
-## 4.4 Desmantelamiento Seguro de Infraestructura (Control de Costos)
-Se procedió con la destrucción de la arquitectura: 
+### 4. Destruir la Infraestructura
+
+Para evitar costos innecesarios, destruye todos los recursos al finalizar las pruebas:
+
 ```powershell
 terraform destroy --auto-approve
 ```
-Métrica final: Destroy complete! Resources: 25 destroyed.
 
+Resultado esperado:
 
+```text
+Destroy complete! Resources: 25 destroyed.
+```
 
+---
+
+## Outputs
+
+Al finalizar `terraform apply`, se generan los siguientes outputs:
+
+| Output | Descripción |
+|---|---|
+| `alb_dns_name` | Registro DNS público del Load Balancer, punto de entrada para las peticiones HTTP externas |
+| `mongodb_private_ip` | IP privada fija de la instancia MongoDB, usada para la comunicación interna con la aplicación |
+| `nat_gateway_public_ip` | IP pública del NAT Gateway, permite la salida a internet de los recursos en subredes privadas |
+| `nodejs_private_ips` | IPs privadas de las dos instancias EC2 que ejecutan la aplicación Node.js |
+| `nodejs_public_ips` | Vacío por diseño (`""`); confirma que las instancias de aplicación no tienen interfaz pública expuesta |
+
+---
+
+## Notas de Seguridad
+
+- No incluyas credenciales de AWS directamente en archivos `.tf`; usa variables de entorno, `aws configure` o un gestor de secretos.
+- Agrega un archivo `.gitignore` que excluya `*.tfstate`, `*.tfstate.backup`, `.terraform/` y cualquier archivo `*.tfvars` con datos sensibles.
+- Las instancias Node.js y MongoDB permanecen sin IP pública como parte del diseño de defensa en profundidad; todo el tráfico externo debe pasar por el ALB.
+
+---
+
+## Licencia
+
+Este proyecto se distribuye con fines educativos/de laboratorio. Ajusta esta sección según la licencia que desees aplicar (por ejemplo, MIT).
