@@ -5,7 +5,7 @@ Despliegue automatizado en AWS de la infraestructura para una aplicación **MEAN
 El proyecto crea una arquitectura de tres capas con subredes públicas y privadas, un Application Load Balancer, instancias EC2 para la aplicación Node.js, una instancia para MongoDB y un NAT Gateway para permitir la salida a internet de los recursos privados sin exponerlos.
 
 ---
-
+📖 **English version:** [README_en.md](README_en.md)
 ## Tabla de Contenidos
 
 - [Arquitectura](#arquitectura)
