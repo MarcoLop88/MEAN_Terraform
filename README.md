@@ -54,7 +54,35 @@ New-Item modules\\security\\main.tf, modules\\security\\variables.tf, modules\\s
 New-Item modules\\compute\\main.tf, modules\\compute\\variables.tf, modules\\compute\\outputs.tf -ItemType File
 New-Item modules\\alb\\main.tf, modules\\alb\\variables.tf, modules\\alb\\outputs.tf -ItemType File
 ``` 
+## Estructura del proyecto
 
+```text
+terraform-mean/
+│
+├── backend.tf
+├── provider.tf
+├── versions.tf
+├── variables.tf
+├── terraform.tfvars
+├── locals.tf
+├── data.tf
+├── outputs.tf
+├── main.tf
+│
+├── modules/
+│   ├── network/
+│   ├── security/
+│   ├── keypair/
+│   ├── iam/
+│   ├── ec2-instance/
+│   └── alb/
+│
+├── userdata/
+│   ├── node.sh
+│   └── mongo.sh
+│
+└── README.md
+```
 
 
 
